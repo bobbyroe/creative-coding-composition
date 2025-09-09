@@ -1,5 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { DragControls } from 'three/addons/controls/DragControls.js';
+
 const w = window.innerWidth;
 const h = window.innerHeight;
 const scene = new THREE.Scene();
@@ -10,21 +12,27 @@ renderer.setSize(w, h);
 renderer.setClearColor(0x000, 1);
 document.body.appendChild(renderer.domElement);
 
-const ctrls = new OrbitControls(camera, renderer.domElement);
-ctrls.enableDamping = true;
+// const ctrls = new OrbitControls(camera, renderer.domElement);
+// ctrls.enableDamping = true;
 
-const stuffGroup = new THREE.Group();
-scene.add(stuffGroup);
+const meshesGroup = new THREE.Group();
+scene.add(meshesGroup);
 
 const imgGroup = new THREE.Group();
 scene.add(imgGroup);
 // const palette = [0x787257, 0x555867, 0x7dcade, 0xb2ae8b, 0xcadd4f, 0xefac41, 0xec3b75, 0x99d0d5, 0xddebeb];
 // const palette = ["#00202e", "#003f5c", "#2c4875", "#8a508f", "#bc5090", "#ff6361", "#ff8531", "#ffa600", "#ffd380"];
 // const palette = ["#f72585", "#b5179e", "#7209b7", "#560bad", "#480ca8", "#3a0ca3", "#3f37c9", "#4361ee", "#4895ef", "#4cc9f0"];
-const palette = ["#7d0000","#570000","#101010","#401854","#4f007c"];
+const palette = ["#7d0000", "#570000", "#101010", "#401854", "#4f007c"];
+
+function randomFloat(n = 1.0) {
+  return (Math.sin(n) * 363146190.832) % 1;
+}
+
 function init(strokes) {
 
   function getSprite(imgs = strokes, size = 1) {
+
     const randomIndex = Math.floor(Math.random() * imgs.length);
     const map = imgs[randomIndex];
     const colorIndex = Math.floor(Math.random() * palette.length);
@@ -44,7 +52,9 @@ function init(strokes) {
   const dodeca = new THREE.DodecahedronGeometry(1, 0);
   const donut = new THREE.TorusGeometry(1, 0.3, 12, 24);
   const geos = [tetra, ball, box, octa, dodeca, donut];
+
   function getMesh() {
+
     const geo = geos[Math.floor(Math.random() * geos.length)];
     const colorIndex = Math.floor(Math.random() * palette.length);
     const color = new THREE.Color(palette[colorIndex]);
@@ -58,7 +68,9 @@ function init(strokes) {
   }
 
   function bunchaSprites({ numSprites = 75, imgs = images, z = 0.5, size }) {
+
     for (let i = 0; i < numSprites; i++) {
+
       const sprite = getSprite(imgs, size);
       const r = 1.5 + Math.random() * 1.0;
       const theta = Math.random() * Math.PI * 1.5;
@@ -70,8 +82,11 @@ function init(strokes) {
     }
   }
   function bunchaMeshes({ z = 0 }) {
+
     const numThings = 50;
+
     for (let i = 0; i < numThings; i++) {
+
       const thing = getMesh();
       const r = 1.5 + Math.random() * 1.0;
       const theta = Math.random() * Math.PI * 1.5;
@@ -79,17 +94,59 @@ function init(strokes) {
       let y = r * Math.sin(theta);
       z += Math.random() * 1 - 0.5;
       thing.position.set(x, y, z);
-      stuffGroup.add(thing);
+      meshesGroup.add(thing);
     }
   }
   bunchaMeshes({ z: 0.0 });
   bunchaSprites({ numSprites: 10, imgs: strokes, z: -2.0, size: 7 });
 
+  const mouse2d = new THREE.Vector2();
+  const pointerPos = new THREE.Vector3();
+  const raycaster = new THREE.Raycaster();
+  const dragControls = new DragControls(meshesGroup.children, camera, renderer.domElement);
+  let enableDelete = false;
+  dragControls.addEventListener('dragend', (event) => {
+    enableDelete = false;
+  });
+
+  function handleRaycast() {
+    raycaster.setFromCamera(mouse2d, camera);
+    // const draggableObjects = dragControls.objects;
+    // draggableObjects.length = 0;
+    const intersects = raycaster.intersectObjects(meshesGroup.children);
+    if (intersects.length > 0) {
+      const obj = intersects[0].object;
+      // pointerPos.copy(obj.position);
+      // draggableObjects.push(obj);
+      if (enableDelete) {
+        meshesGroup.remove(obj);
+      }
+    }
+  }
+
   function animate(t = 0) {
     renderer.render(scene, camera);
-    ctrls.update();
+    handleRaycast();
+    // ctrls.update();
   }
   renderer.setAnimationLoop(animate);
+
+  window.addEventListener('mousemove', (evt) => {
+    mouse2d.x = (evt.clientX / window.innerWidth) * 2 - 1;
+    mouse2d.y = -(evt.clientY / window.innerHeight) * 2 + 1;
+  });
+
+  window.addEventListener('keydown', (evt) => {
+    if (evt.key === 'Shift') {
+      enableDelete = true;
+      renderer.domElement.style.cursor = 'crosshair';
+    }
+  });
+  window.addEventListener('keyup', (evt) => {
+    enableDelete = false;
+    renderer.domElement.style.cursor = 'auto';
+  });
+
 }
 
 // load textures
@@ -112,4 +169,14 @@ function handleWindowResize() {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
+
 window.addEventListener('resize', handleWindowResize, false);
+
+// TODO25:
+// raycaster / click and drag to move
+// shift-click to delete
+// deterministic RNG
+// flat gradient shaders
+// how to separate foreground and background?  -- white gradient?
+// -- in-shader edge outlining?
+// high-res image exporter
