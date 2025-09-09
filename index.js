@@ -12,9 +12,11 @@ renderer.setSize(w, h);
 renderer.setClearColor(0x000, 1);
 document.body.appendChild(renderer.domElement);
 
-// const ctrls = new OrbitControls(camera, renderer.domElement);
-// ctrls.enableDamping = true;
-
+const ctrls = new OrbitControls(camera, renderer.domElement);
+ctrls.enableDamping = true;
+function enableOrbitCtrls(enabled) {
+  ctrls.enabled = enabled;
+}
 const meshesGroup = new THREE.Group();
 scene.add(meshesGroup);
 
@@ -64,6 +66,28 @@ function init(strokes) {
     const size = 0.5 + Math.random() * 0.5 - 0.25;
     mesh.scale.setScalar(size);
     mesh.rotation.set(Math.random() * Math.PI * 2, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2);
+
+    // outline
+    const outlineMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.5,
+      side: THREE.BackSide,
+    });
+    const outlineMesh = new THREE.Mesh(geo, outlineMat);
+    const outlineSize = 1.05;
+    outlineMesh.scale.set(outlineSize, outlineSize, outlineSize);
+    outlineMesh.visible = false;
+    mesh.add(outlineMesh);
+    mesh.userData = {
+      handleHover: (isHovering) => {
+        if (isHovering) {
+          outlineMesh.visible = true;
+        } else {
+          outlineMesh.visible = false;
+        }
+      }
+    }
     return mesh;
   }
 
@@ -101,33 +125,23 @@ function init(strokes) {
   bunchaSprites({ numSprites: 10, imgs: strokes, z: -2.0, size: 7 });
 
   const mouse2d = new THREE.Vector2();
-  const pointerPos = new THREE.Vector3();
-  const raycaster = new THREE.Raycaster();
   const dragControls = new DragControls(meshesGroup.children, camera, renderer.domElement);
   let enableDelete = false;
-  dragControls.addEventListener('dragend', (event) => {
-    enableDelete = false;
-  });
-
-  function handleRaycast() {
-    raycaster.setFromCamera(mouse2d, camera);
-    // const draggableObjects = dragControls.objects;
-    // draggableObjects.length = 0;
-    const intersects = raycaster.intersectObjects(meshesGroup.children);
-    if (intersects.length > 0) {
-      const obj = intersects[0].object;
-      // pointerPos.copy(obj.position);
-      // draggableObjects.push(obj);
-      if (enableDelete) {
-        meshesGroup.remove(obj);
-      }
+  dragControls.addEventListener('dragstart', (event) => {
+    if (enableDelete) {
+      meshesGroup.remove(event.object);
     }
-  }
+    enableOrbitCtrls(false);
+  });
+  dragControls.addEventListener('dragend', () => enableOrbitCtrls(true));
+
+  dragControls.addEventListener('hoveron', (evt) => evt.object?.userData.handleHover(true));
+
+  dragControls.addEventListener('hoveroff', (evt) => evt.object?.userData.handleHover(false));
 
   function animate(t = 0) {
     renderer.render(scene, camera);
-    handleRaycast();
-    // ctrls.update();
+    ctrls.update();
   }
   renderer.setAnimationLoop(animate);
 
@@ -136,17 +150,9 @@ function init(strokes) {
     mouse2d.y = -(evt.clientY / window.innerHeight) * 2 + 1;
   });
 
-  window.addEventListener('keydown', (evt) => {
-    if (evt.key === 'Shift') {
-      enableDelete = true;
-      renderer.domElement.style.cursor = 'crosshair';
-    }
-  });
-  window.addEventListener('keyup', (evt) => {
-    enableDelete = false;
-    renderer.domElement.style.cursor = 'auto';
-  });
+  window.addEventListener('keydown', (evt) => enableDelete = evt.key === 'Shift');
 
+  window.addEventListener('keyup', () => enableDelete = false);
 }
 
 // load textures
@@ -164,17 +170,15 @@ strokes.forEach((name) => {
   });
 });
 
-function handleWindowResize() {
+window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-}
-
-window.addEventListener('resize', handleWindowResize, false);
+});
 
 // TODO25:
-// raycaster / click and drag to move
-// shift-click to delete
+// √ drag to move
+// √ shift-click to delete
 // deterministic RNG
 // flat gradient shaders
 // how to separate foreground and background?  -- white gradient?
