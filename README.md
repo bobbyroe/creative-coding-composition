@@ -1,14 +1,14 @@
 # Three.js Project: Creative Coding Composition
 
-::Coming Soon::
+Build a dynamic 3D composition with Three.js! In this tutorial explore creative ways to arrange elements into a cool composition.
 
-![image](./glass-shot.png)
+![image](./comp.jpg)
 
+Watch the tutorial on [YouTube](https://youtu.be/vXjnbu1f7Cs)
 
+❤️ Support my work: [Patreon](https://www.patreon.com/c/RobotBobby) Thanks! 
 
-
-## Dependencies
-- [Three.js](https://threejs.org/) (WebGPU Renderer, Orbit Controls)
+#threejs #creativecoding #webgpu #dragcontrols #sprites
 
 ## Development
 Modify `index.js` to experiment with different Three.js objects, materials, or effects.
