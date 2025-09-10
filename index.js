@@ -9,7 +9,7 @@ const camera = new THREE.PerspectiveCamera(75, w / h, 0.1, 1000);
 camera.position.z = 6.5;
 const renderer = new THREE.WebGPURenderer({ antialias: true });
 renderer.setSize(w, h);
-renderer.setClearColor(0x000, 1);
+renderer.setClearColor(0xd5d3aa, 1);
 document.body.appendChild(renderer.domElement);
 
 const ctrls = new OrbitControls(camera, renderer.domElement);
@@ -24,8 +24,8 @@ const imgGroup = new THREE.Group();
 scene.add(imgGroup);
 // const palette = [0x787257, 0x555867, 0x7dcade, 0xb2ae8b, 0xcadd4f, 0xefac41, 0xec3b75, 0x99d0d5, 0xddebeb];
 // const palette = ["#00202e", "#003f5c", "#2c4875", "#8a508f", "#bc5090", "#ff6361", "#ff8531", "#ffa600", "#ffd380"];
-// const palette = ["#f72585", "#b5179e", "#7209b7", "#560bad", "#480ca8", "#3a0ca3", "#3f37c9", "#4361ee", "#4895ef", "#4cc9f0"];
-const palette = ["#7d0000", "#570000", "#101010", "#401854", "#4f007c"];
+const palette = ["#f72585", "#b5179e", "#7209b7", "#560bad", "#480ca8", "#3a0ca3", "#3f37c9", "#4361ee", "#4895ef", "#4cc9f0"];
+// const palette = ["#7d0000", "#570000", "#101010", "#401854", "#4f007c"];
 
 function randomFloat(n = 1.0) {
   return (Math.sin(n) * 363146190.832) % 1;
